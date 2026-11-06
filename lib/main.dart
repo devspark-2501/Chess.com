@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'features/game/presentation/screens/game_screen.dart';
 
 void main() {
   runApp(const ChessApp());
@@ -12,10 +13,9 @@ class ChessApp extends StatelessWidget {
     return MaterialApp(
       title: 'Chess.com Clone',
       debugShowCheckedModeBanner: false,
-      // Chess.com style dark theme configuration
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF161512), // Chess.com dark background
+        scaffoldBackgroundColor: const Color(0xFF161512), // Chess.com background
         primaryColor: const Color(0xFF81B64C),          // Chess.com green accent
         colorScheme: const ColorScheme.dark(
           primary: Color(0xFF81B64C),
@@ -61,7 +61,7 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 40),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF81B64C), // Chess.com green
+                backgroundColor: const Color(0xFF81B64C),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 18),
                 shape: RoundedRectangleBorder(
@@ -69,7 +69,10 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               onPressed: () {
-                // TODO: Navigate to the 1v1 game screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const GameScreen()),
+                );
               },
               child: const Text(
                 'Play 1v1',
