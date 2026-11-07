@@ -1,8 +1,47 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/piece_assets.dart';
+import '../../domain/entities/chess_piece.dart';
 
-class GameScreen extends StatelessWidget {
+class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
+
+  @override
+  State<GameScreen> createState() => _GameScreenState();
+}
+
+class _GameScreenState extends State<GameScreen> {
+  // 8x8 grid representing the board. Null means empty square.
+  late List<List<ChessPiece?>> board;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeBoard();
+  }
+
+  void _initializeBoard() {
+    // Create empty 8x8 board
+    List<List<ChessPiece?>> newBoard = List.generate(
+      8,
+          (index) => List.filled(8, null),
+    );
+
+    // --- Setup Black Pieces (Rows 0 and 1) ---
+    // Back row
+    List<String> pieceOrder = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
+    for (int col = 0; col < 8; col++) {
+      newBoard[0][col] = ChessPiece(type: pieceOrder[col], color: 'black');
+      newBoard[1][col] = ChessPiece(type: 'pawn', color: 'black');
+    }
+
+    // --- Setup White Pieces (Rows 6 and 7) ---
+    for (int col = 0; col < 8; col++) {
+      newBoard[6][col] = ChessPiece(type: 'pawn', color: 'white');
+      newBoard[7][col] = ChessPiece(type: pieceOrder[col], color: 'white');
+    }
+
+    board = newBoard;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,23 +71,21 @@ class GameScreen extends StatelessWidget {
                   int col = index % 8;
                   bool isLightSquare = (row + col) % 2 == 0;
 
-                  // Chess.com board colors
                   Color squareColor = isLightSquare
                       ? const Color(0xFFEBECD0) // Light square
                       : const Color(0xFF739552); // Dark square
 
-                  // Example: Place a white rook at the bottom-right corner (row 7, col 7)
-                  Widget? pieceWidget;
-                  if (row == 7 && col == 7) {
-                    pieceWidget = Image.asset(
-                      PieceAssets.getImagePath('white', 'rook'),
-                    );
-                  }
+                  ChessPiece? piece = board[row][col];
 
                   return Container(
                     color: squareColor,
                     child: Center(
-                      child: pieceWidget,
+                      child: piece != null
+                          ? Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Image.asset(piece.assetPath),
+                      )
+                          : null,
                     ),
                   );
                 },
