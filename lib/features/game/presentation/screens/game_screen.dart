@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../domain/entities/chess_piece.dart';
+import '../../domain/usecases/move_validator.dart';
 import '../widgets/chess_board_widget.dart';
 import '../widgets/captured_pieces.dart';
 
@@ -52,26 +53,32 @@ class _GameScreenState extends State<GameScreen> {
   void _handleSquareTap(int row, int col) {
     setState(() {
       if (selectedRow == null && selectedCol == null) {
-        if (board[row][col] != null) {
-          selectedRow = row;
-          selectedCol = col;
-        }
-      } else {
-        ChessPiece? targetPiece = board[row][col];
-        if (targetPiece != null) {
-          if (targetPiece.color == 'white') {
-            blackCaptured.add(targetPiece);
-          } else {
-            whiteCaptured.add(targetPiece);
+        ChessPiece? piece = board[row][col];
+        if (piece != null) {
+          if ((isWhiteTurn && piece.color == 'white') || (!isWhiteTurn && piece.color == 'black')) {
+            selectedRow = row;
+            selectedCol = col;
           }
         }
+      } else {
+        if (ChessMoveValidator.isValidMove(board, selectedRow!, selectedCol!, row, col)) {
+          ChessPiece? targetPiece = board[row][col];
+          if (targetPiece != null) {
+            if (targetPiece.color == 'white') {
+              blackCaptured.add(targetPiece);
+            } else {
+              whiteCaptured.add(targetPiece);
+            }
+          }
 
-        board[row][col] = board[selectedRow!][selectedCol!];
-        board[selectedRow!][selectedCol!] = null;
+          board[row][col] = board[selectedRow!][selectedCol!];
+          board[selectedRow!][selectedCol!] = null;
+
+          isWhiteTurn = !isWhiteTurn;
+        }
 
         selectedRow = null;
         selectedCol = null;
-        isWhiteTurn = !isWhiteTurn;
       }
     });
   }
@@ -81,7 +88,7 @@ class _GameScreenState extends State<GameScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
       appBar: AppBar(
-        title: const Text('1v1 Match'),
+        title: Text(isWhiteTurn ? "White's Turn" : "Black's Turn"),
         backgroundColor: AppColors.surfaceDark,
       ),
       body: SafeArea(
@@ -118,12 +125,13 @@ class _GameScreenState extends State<GameScreen> {
           ),
           const SizedBox(width: 12),
           Column(
-            crossAxisAlignment: CrossAxisAlignment.start, // Fixed typo here
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 name,
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
+              const SizedBox(height: 4),
               CapturedPiecesWidget(capturedPieces: captured),
             ],
           ),

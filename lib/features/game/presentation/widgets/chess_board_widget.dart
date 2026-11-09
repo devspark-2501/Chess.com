@@ -37,7 +37,6 @@ class ChessBoardWidget extends StatelessWidget {
             bool isLightSquare = (row + col) % 2 == 0;
             bool isSelected = selectedRow == row && selectedCol == col;
 
-            // Square coloring with selection highlight
             Color squareColor = isSelected
                 ? AppColors.primaryGreen.withOpacity(0.8)
                 : (isLightSquare ? AppColors.lightSquare : AppColors.darkSquare);
