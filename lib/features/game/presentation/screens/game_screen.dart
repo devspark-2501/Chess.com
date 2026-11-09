@@ -51,14 +51,12 @@ class _GameScreenState extends State<GameScreen> {
 
   void _handleSquareTap(int row, int col) {
     setState(() {
-      // Tap selection and move placeholder
       if (selectedRow == null && selectedCol == null) {
         if (board[row][col] != null) {
           selectedRow = row;
           selectedCol = col;
         }
       } else {
-        // Move piece to tapped location
         ChessPiece? targetPiece = board[row][col];
         if (targetPiece != null) {
           if (targetPiece.color == 'white') {
@@ -89,12 +87,8 @@ class _GameScreenState extends State<GameScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Top Player Card (Black)
             _buildPlayerHeader('Player 2 (Black)', blackCaptured),
-
             const Spacer(),
-
-            // Chessboard Widget
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12.0),
               child: ChessBoardWidget(
@@ -104,10 +98,7 @@ class _GameScreenState extends State<GameScreen> {
                 onSquareTap: _handleSquareTap,
               ),
             ),
-
             const Spacer(),
-
-            // Bottom Player Card (White)
             _buildPlayerHeader('Player 1 (White)', whiteCaptured),
           ],
         ),
@@ -127,7 +118,7 @@ class _GameScreenState extends State<GameScreen> {
           ),
           const SizedBox(width: 12),
           Column(
-            crossAxisAlignment: CrossAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start, // Fixed typo here
             children: [
               Text(
                 name,
