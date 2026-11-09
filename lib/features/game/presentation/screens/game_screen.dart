@@ -4,6 +4,7 @@ import '../../domain/entities/chess_piece.dart';
 import '../../domain/usecases/move_validator.dart';
 import '../widgets/chess_board_widget.dart';
 import '../widgets/captured_pieces.dart';
+import '../widgets/game_over_dialog.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -19,6 +20,7 @@ class _GameScreenState extends State<GameScreen> {
 
   int? selectedRow;
   int? selectedCol;
+  List<List<int>> currentValidMoves = [];
   bool isWhiteTurn = true;
   String? gameOverMessage;
 
@@ -36,13 +38,11 @@ class _GameScreenState extends State<GameScreen> {
 
     List<String> pieceOrder = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
 
-    // Black pieces
     for (int col = 0; col < 8; col++) {
       newBoard[0][col] = ChessPiece(type: pieceOrder[col], color: 'black');
       newBoard[1][col] = ChessPiece(type: 'pawn', color: 'black');
     }
 
-    // White pieces
     for (int col = 0; col < 8; col++) {
       newBoard[6][col] = ChessPiece(type: 'pawn', color: 'white');
       newBoard[7][col] = ChessPiece(type: pieceOrder[col], color: 'white');
@@ -55,6 +55,7 @@ class _GameScreenState extends State<GameScreen> {
       isWhiteTurn = true;
       selectedRow = null;
       selectedCol = null;
+      currentValidMoves.clear();
       gameOverMessage = null;
     });
   }
@@ -70,6 +71,7 @@ class _GameScreenState extends State<GameScreen> {
           if ((isWhiteTurn && clickedPiece.color == 'white') || (!isWhiteTurn && clickedPiece.color == 'black')) {
             selectedRow = row;
             selectedCol = col;
+            currentValidMoves = ChessMoveValidator.getValidMoves(board, row, col);
           }
         }
       } else {
@@ -77,6 +79,7 @@ class _GameScreenState extends State<GameScreen> {
             ((isWhiteTurn && clickedPiece.color == 'white') || (!isWhiteTurn && clickedPiece.color == 'black'))) {
           selectedRow = row;
           selectedCol = col;
+          currentValidMoves = ChessMoveValidator.getValidMoves(board, row, col);
           return;
         }
 
@@ -85,7 +88,7 @@ class _GameScreenState extends State<GameScreen> {
 
           if (clickedPiece != null) {
             if (clickedPiece.type == 'king') {
-              gameOverMessage = "${movingPiece.color.toUpperCase()} Wins by capturing the King!";
+              gameOverMessage = "${movingPiece.color.toUpperCase()} Wins by Checkmate!";
             }
             if (clickedPiece.color == 'white') {
               blackCaptured.add(clickedPiece);
@@ -94,11 +97,9 @@ class _GameScreenState extends State<GameScreen> {
             }
           }
 
-          // Execute move
           board[row][col] = movingPiece;
           board[selectedRow!][selectedCol!] = null;
 
-          // Check for Pawn Promotion (White reaches row 0, Black reaches row 7)
           if (movingPiece.type == 'pawn' && (row == 0 || row == 7)) {
             _showPromotionDialog(row, col, movingPiece.color);
           }
@@ -108,6 +109,7 @@ class _GameScreenState extends State<GameScreen> {
 
         selectedRow = null;
         selectedCol = null;
+        currentValidMoves.clear();
       }
     });
   }
@@ -153,7 +155,7 @@ class _GameScreenState extends State<GameScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
       appBar: AppBar(
-        title: Text(gameOverMessage ?? (isWhiteTurn ? "White's Turn" : "Black's Turn")),
+        title: Text(isWhiteTurn ? "White's Turn" : "Black's Turn"),
         backgroundColor: AppColors.surfaceDark,
         actions: [
           IconButton(
@@ -163,24 +165,35 @@ class _GameScreenState extends State<GameScreen> {
           )
         ],
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildPlayerHeader('Player 2 (Black)', blackCaptured, !isWhiteTurn),
-            const Spacer(),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              child: ChessBoardWidget(
-                board: board,
-                selectedRow: selectedRow,
-                selectedCol: selectedCol,
-                onSquareTap: _handleSquareTap,
-              ),
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                _buildPlayerHeader('Player 2 (Black)', blackCaptured, !isWhiteTurn),
+                const Spacer(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: ChessBoardWidget(
+                    board: board,
+                    selectedRow: selectedRow,
+                    selectedCol: selectedCol,
+                    validMoves: currentValidMoves,
+                    onSquareTap: _handleSquareTap,
+                  ),
+                ),
+                const Spacer(),
+                _buildPlayerHeader('Player 1 (White)', whiteCaptured, isWhiteTurn),
+              ],
             ),
-            const Spacer(),
-            _buildPlayerHeader('Player 1 (White)', whiteCaptured, isWhiteTurn),
-          ],
-        ),
+          ),
+          // Blur checkmate overlay screen takes over when game ends
+          if (gameOverMessage != null)
+            GameOverDialog(
+              message: gameOverMessage!,
+              onRematch: _initializeBoard,
+            ),
+        ],
       ),
     );
   }
