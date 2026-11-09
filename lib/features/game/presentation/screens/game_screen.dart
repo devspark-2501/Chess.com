@@ -52,31 +52,44 @@ class _GameScreenState extends State<GameScreen> {
 
   void _handleSquareTap(int row, int col) {
     setState(() {
+      ChessPiece? clickedPiece = board[row][col];
+
       if (selectedRow == null && selectedCol == null) {
-        ChessPiece? piece = board[row][col];
-        if (piece != null) {
-          if ((isWhiteTurn && piece.color == 'white') || (!isWhiteTurn && piece.color == 'black')) {
+        // First tap: Select a piece if it belongs to the current player
+        if (clickedPiece != null) {
+          if ((isWhiteTurn && clickedPiece.color == 'white') || (!isWhiteTurn && clickedPiece.color == 'black')) {
             selectedRow = row;
             selectedCol = col;
           }
         }
       } else {
+        // If clicking another one of your own pieces, switch selection instead of trying to move there
+        if (clickedPiece != null &&
+            ((isWhiteTurn && clickedPiece.color == 'white') || (!isWhiteTurn && clickedPiece.color == 'black'))) {
+          selectedRow = row;
+          selectedCol = col;
+          return;
+        }
+
+        // Second tap: Attempt to make the move
         if (ChessMoveValidator.isValidMove(board, selectedRow!, selectedCol!, row, col)) {
-          ChessPiece? targetPiece = board[row][col];
-          if (targetPiece != null) {
-            if (targetPiece.color == 'white') {
-              blackCaptured.add(targetPiece);
+          if (clickedPiece != null) {
+            if (clickedPiece.color == 'white') {
+              blackCaptured.add(clickedPiece);
             } else {
-              whiteCaptured.add(targetPiece);
+              whiteCaptured.add(clickedPiece);
             }
           }
 
+          // Execute move
           board[row][col] = board[selectedRow!][selectedCol!];
           board[selectedRow!][selectedCol!] = null;
 
+          // Switch turn
           isWhiteTurn = !isWhiteTurn;
         }
 
+        // Reset selection
         selectedRow = null;
         selectedCol = null;
       }
@@ -88,13 +101,29 @@ class _GameScreenState extends State<GameScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
       appBar: AppBar(
-        title: Text(isWhiteTurn ? "White's Turn" : "Black's Turn"),
+        title: Text(isWhiteTurn ? "White's Turn (Player 1)" : "Black's Turn (Player 2)"),
         backgroundColor: AppColors.surfaceDark,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              setState(() {
+                _initializeBoard();
+                whiteCaptured.clear();
+                blackCaptured.clear();
+                isWhiteTurn = true;
+                selectedRow = null;
+                selectedCol = null;
+              });
+            },
+            tooltip: 'Reset Game',
+          )
+        ],
       ),
       body: SafeArea(
         child: Column(
           children: [
-            _buildPlayerHeader('Player 2 (Black)', blackCaptured),
+            _buildPlayerHeader('Player 2 (Black)', blackCaptured, !isWhiteTurn),
             const Spacer(),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -106,22 +135,22 @@ class _GameScreenState extends State<GameScreen> {
               ),
             ),
             const Spacer(),
-            _buildPlayerHeader('Player 1 (White)', whiteCaptured),
+            _buildPlayerHeader('Player 1 (White)', whiteCaptured, isWhiteTurn),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPlayerHeader(String name, List<ChessPiece> captured) {
+  Widget _buildPlayerHeader(String name, List<ChessPiece> captured, bool isActive) {
     return Container(
       padding: const EdgeInsets.all(12.0),
-      color: AppColors.surfaceDark,
+      color: isActive ? AppColors.surfaceDark.withOpacity(0.9) : AppColors.surfaceDark.withOpacity(0.4),
       child: Row(
         children: [
-          const CircleAvatar(
-            backgroundColor: AppColors.primaryGreen,
-            child: Icon(Icons.person, color: Colors.white),
+          CircleAvatar(
+            backgroundColor: isActive ? AppColors.primaryGreen : Colors.grey,
+            child: const Icon(Icons.person, color: Colors.white),
           ),
           const SizedBox(width: 12),
           Column(
@@ -129,7 +158,11 @@ class _GameScreenState extends State<GameScreen> {
             children: [
               Text(
                 name,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: isActive ? Colors.white : Colors.grey,
+                ),
               ),
               const SizedBox(height: 4),
               CapturedPiecesWidget(capturedPieces: captured),
