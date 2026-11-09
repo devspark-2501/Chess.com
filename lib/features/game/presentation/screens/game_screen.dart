@@ -20,6 +20,7 @@ class _GameScreenState extends State<GameScreen> {
   int? selectedRow;
   int? selectedCol;
   bool isWhiteTurn = true;
+  String? gameOverMessage;
 
   @override
   void initState() {
@@ -47,15 +48,24 @@ class _GameScreenState extends State<GameScreen> {
       newBoard[7][col] = ChessPiece(type: pieceOrder[col], color: 'white');
     }
 
-    board = newBoard;
+    setState(() {
+      board = newBoard;
+      whiteCaptured.clear();
+      blackCaptured.clear();
+      isWhiteTurn = true;
+      selectedRow = null;
+      selectedCol = null;
+      gameOverMessage = null;
+    });
   }
 
   void _handleSquareTap(int row, int col) {
+    if (gameOverMessage != null) return;
+
     setState(() {
       ChessPiece? clickedPiece = board[row][col];
 
       if (selectedRow == null && selectedCol == null) {
-        // First tap: Select a piece if it belongs to the current player
         if (clickedPiece != null) {
           if ((isWhiteTurn && clickedPiece.color == 'white') || (!isWhiteTurn && clickedPiece.color == 'black')) {
             selectedRow = row;
@@ -63,7 +73,6 @@ class _GameScreenState extends State<GameScreen> {
           }
         }
       } else {
-        // If clicking another one of your own pieces, switch selection instead of trying to move there
         if (clickedPiece != null &&
             ((isWhiteTurn && clickedPiece.color == 'white') || (!isWhiteTurn && clickedPiece.color == 'black'))) {
           selectedRow = row;
@@ -71,9 +80,13 @@ class _GameScreenState extends State<GameScreen> {
           return;
         }
 
-        // Second tap: Attempt to make the move
         if (ChessMoveValidator.isValidMove(board, selectedRow!, selectedCol!, row, col)) {
+          ChessPiece movingPiece = board[selectedRow!][selectedCol!]!;
+
           if (clickedPiece != null) {
+            if (clickedPiece.type == 'king') {
+              gameOverMessage = "${movingPiece.color.toUpperCase()} Wins by capturing the King!";
+            }
             if (clickedPiece.color == 'white') {
               blackCaptured.add(clickedPiece);
             } else {
@@ -82,17 +95,56 @@ class _GameScreenState extends State<GameScreen> {
           }
 
           // Execute move
-          board[row][col] = board[selectedRow!][selectedCol!];
+          board[row][col] = movingPiece;
           board[selectedRow!][selectedCol!] = null;
 
-          // Switch turn
+          // Check for Pawn Promotion (White reaches row 0, Black reaches row 7)
+          if (movingPiece.type == 'pawn' && (row == 0 || row == 7)) {
+            _showPromotionDialog(row, col, movingPiece.color);
+          }
+
           isWhiteTurn = !isWhiteTurn;
         }
 
-        // Reset selection
         selectedRow = null;
         selectedCol = null;
       }
+    });
+  }
+
+  void _showPromotionDialog(int row, int col, String color) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: AppColors.surfaceDark,
+            title: const Text('Pawn Promotion', style: TextStyle(color: Colors.white)),
+            content: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: ['queen', 'rook', 'bishop', 'knight'].map((pieceType) {
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      board[row][col] = ChessPiece(type: pieceType, color: color);
+                    });
+                    Navigator.of(context).pop();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Image.asset(
+                      'assets/images/pieces/$color/$pieceType.png',
+                      width: 40,
+                      height: 40,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          );
+        },
+      );
     });
   }
 
@@ -101,21 +153,12 @@ class _GameScreenState extends State<GameScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
       appBar: AppBar(
-        title: Text(isWhiteTurn ? "White's Turn (Player 1)" : "Black's Turn (Player 2)"),
+        title: Text(gameOverMessage ?? (isWhiteTurn ? "White's Turn" : "Black's Turn")),
         backgroundColor: AppColors.surfaceDark,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () {
-              setState(() {
-                _initializeBoard();
-                whiteCaptured.clear();
-                blackCaptured.clear();
-                isWhiteTurn = true;
-                selectedRow = null;
-                selectedCol = null;
-              });
-            },
+            onPressed: _initializeBoard,
             tooltip: 'Reset Game',
           )
         ],
