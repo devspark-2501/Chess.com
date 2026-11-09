@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../game/presentation/screens/game_screen.dart';
+import '../widgets/menu_button.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -10,7 +11,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Default selected time control (e.g., 3 min)
   String selectedTimeControl = '3 min';
 
   @override
@@ -22,10 +22,10 @@ class _HomeScreenState extends State<HomeScreen> {
           icon: const Icon(Icons.menu, color: Colors.white),
           onPressed: () {},
         ),
-        title: Row(
+        title: const Row(
           children: [
-            const Icon(Icons.extension, color: AppColors.primaryGreen, size: 28),
-            const SizedBox(width: 8),
+            Icon(Icons.extension, color: AppColors.primaryGreen, size: 28),
+            SizedBox(width: 8),
             Text(
               'Chess.com',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white),
@@ -47,29 +47,29 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // --- 1. User Profile Header Bar ---
+              // User Profile Header Bar
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceDark,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Row(
+                child: const Row(
                   children: [
-                    const CircleAvatar(
+                    CircleAvatar(
                       backgroundColor: Colors.white24,
                       child: Icon(Icons.person, color: Colors.white),
                     ),
-                    const SizedBox(width: 12),
-                    const Text(
+                    SizedBox(width: 12),
+                    Text(
                       'Tanush-25',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
                     ),
-                    const SizedBox(width: 8),
-                    const Text('🇮🇳', style: TextStyle(fontSize: 16)),
-                    const Spacer(),
-                    const Icon(Icons.local_fire_department, color: Colors.orange, size: 20),
-                    const Text(
+                    SizedBox(width: 8),
+                    Text('🇮🇳', style: TextStyle(fontSize: 16)),
+                    Spacer(),
+                    Icon(Icons.local_fire_department, color: Colors.orange, size: 20),
+                    Text(
                       ' 1100',
                       style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
                     ),
@@ -78,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 20),
 
-              // --- 2. Time Control Selectors (3 min, 1 min, 10 min) ---
+              // Time Control Buttons
               Row(
                 children: ['3 min', '1 min', '10 min'].map((time) {
                   bool isSelected = selectedTimeControl == time;
@@ -118,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 12),
 
-              // --- 3. Big Green Start Game Button ---
+              // Start Game Button
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryGreen,
@@ -140,8 +140,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 20),
 
-              // --- 4. Stacked Menu Buttons ---
-              _buildMenuButton(
+              // Menu Buttons
+              MenuButton(
                 icon: Icons.flash_on,
                 title: 'Play Online',
                 onTap: () {
@@ -151,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
               ),
-              _buildMenuButton(
+              MenuButton(
                 icon: Icons.smart_toy,
                 title: 'Play Bots',
                 onTap: () {
@@ -160,12 +160,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
               ),
-              _buildMenuButton(
+              MenuButton(
                 icon: Icons.school,
                 title: 'Play Coach',
                 onTap: () {},
               ),
-              _buildMenuButton(
+              MenuButton(
                 icon: Icons.people,
                 title: 'Play a Friend',
                 onTap: () {
@@ -177,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 20),
 
-              // --- 5. Puzzle / Bottom Preview Banner ---
+              // Bottom Puzzle Preview
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -189,16 +189,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     Container(
                       width: 60,
                       height: 60,
-                      color: const Color(0xFF739552),
+                      color: AppColors.darkSquare,
                       child: const Center(
                         child: Icon(Icons.grid_view, color: Colors.white54, size: 30),
                       ),
                     ),
                     const SizedBox(width: 16),
-                    Expanded(
+                    const Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Row(
                             children: [
                               Icon(Icons.extension, color: Colors.amber, size: 16),
@@ -221,35 +221,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMenuButton({required IconData icon, required String title, required VoidCallback onTap}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10.0),
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.surfaceDark,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          alignment: Alignment.centerLeft,
-          elevation: 0,
-        ),
-        onPressed: onTap,
-        child: Row(
-          children: [
-            Icon(icon, color: Colors.white70, size: 22),
-            const SizedBox(width: 16),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-            const Spacer(),
-            const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 14),
-          ],
         ),
       ),
     );
