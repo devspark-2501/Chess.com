@@ -7,6 +7,7 @@ class ChessBoardWidget extends StatelessWidget {
   final Function(int row, int col)? onSquareTap;
   final int? selectedRow;
   final int? selectedCol;
+  final List<List<int>> validMoves;
 
   const ChessBoardWidget({
     super.key,
@@ -14,6 +15,7 @@ class ChessBoardWidget extends StatelessWidget {
     this.onSquareTap,
     this.selectedRow,
     this.selectedCol,
+    required this.validMoves,
   });
 
   @override
@@ -37,6 +39,9 @@ class ChessBoardWidget extends StatelessWidget {
             bool isLightSquare = (row + col) % 2 == 0;
             bool isSelected = selectedRow == row && selectedCol == col;
 
+            // Check if this square is a valid target move
+            bool isValidTarget = validMoves.any((m) => m[0] == row && m[1] == col);
+
             Color squareColor = isSelected
                 ? AppColors.primaryGreen.withOpacity(0.8)
                 : (isLightSquare ? AppColors.lightSquare : AppColors.darkSquare);
@@ -47,13 +52,34 @@ class ChessBoardWidget extends StatelessWidget {
               onTap: () => onSquareTap?.call(row, col),
               child: Container(
                 color: squareColor,
-                child: Center(
-                  child: piece != null
-                      ? Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: Image.asset(piece.assetPath),
-                  )
-                      : null,
+                child: Stack(
+                  children: [
+                    Center(
+                      child: piece != null
+                          ? Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Image.asset(piece.assetPath),
+                      )
+                          : null,
+                    ),
+                    // Show a highlight dot or ring on valid move destination squares
+                    if (isValidTarget)
+                      Center(
+                        child: Container(
+                          width: piece == null ? 16 : 48,
+                          height: piece == null ? 16 : 48,
+                          decoration: BoxDecoration(
+                            color: piece == null
+                                ? Colors.black.withOpacity(0.3)
+                                : Colors.transparent,
+                            shape: piece == null ? BoxShape.circle : BoxShape.rectangle,
+                            border: piece != null
+                                ? Border.all(color: Colors.redAccent, width: 4)
+                                : null,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             );
