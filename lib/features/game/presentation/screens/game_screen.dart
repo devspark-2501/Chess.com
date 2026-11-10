@@ -141,9 +141,6 @@ class _GameScreenState extends State<GameScreen> {
           ChessPiece movingPiece = board[selectedRow!][selectedCol!]!;
 
           if (clickedPiece != null) {
-            if (clickedPiece.type == 'king') {
-              gameOverMessage = "${movingPiece.color.toUpperCase()} Wins by Checkmate!";
-            }
             if (clickedPiece.color == 'white') {
               blackCaptured.add(clickedPiece);
             } else {
@@ -158,7 +155,32 @@ class _GameScreenState extends State<GameScreen> {
             _showPromotionDialog(row, col, movingPiece.color);
           }
 
+          // Switch turn
           isWhiteTurn = !isWhiteTurn;
+
+          // Check for Checkmate or Stalemate on the next player
+          String nextPlayerColor = isWhiteTurn ? 'white' : 'black';
+          bool inCheck = ChessMoveValidator.isKingInCheck(board, nextPlayerColor);
+
+          bool hasAnyValidMoves = false;
+          for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+              ChessPiece? p = board[r][c];
+              if (p != null && p.color == nextPlayerColor) {
+                if (ChessMoveValidator.getValidMoves(board, r, c).isNotEmpty) {
+                  hasAnyValidMoves = true;
+                  break;
+                }
+              }
+            }
+            if (hasAnyValidMoves) break;
+          }
+
+          if (inCheck && !hasAnyValidMoves) {
+            gameOverMessage = "${isWhiteTurn ? 'BLACK' : 'WHITE'} Wins by Checkmate!";
+          } else if (!inCheck && !hasAnyValidMoves) {
+            gameOverMessage = "Draw by Stalemate!";
+          }
         }
 
         selectedRow = null;
