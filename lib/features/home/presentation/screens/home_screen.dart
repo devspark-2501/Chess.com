@@ -13,8 +13,23 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String selectedTimeControl = '3 min';
 
+  // Convert time control string to seconds
+  int _getTimeInSeconds(String timeStr) {
+    switch (timeStr) {
+      case '1 min':
+        return 60;
+      case '10 min':
+        return 600;
+      case '3 min':
+      default:
+        return 180;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    int timeSeconds = _getTimeInSeconds(selectedTimeControl);
+
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
       appBar: AppBar(
@@ -130,7 +145,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const GameScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => GameScreen(initialTimeSeconds: timeSeconds),
+                    ),
                   );
                 },
                 child: const Text(
@@ -147,7 +164,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const GameScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => GameScreen(initialTimeSeconds: timeSeconds),
+                    ),
                   );
                 },
               ),
@@ -171,53 +190,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const GameScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => GameScreen(initialTimeSeconds: timeSeconds),
+                    ),
                   );
                 },
-              ),
-              const SizedBox(height: 20),
-
-              // Bottom Puzzle Preview
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceDark,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      color: AppColors.darkSquare,
-                      child: const Center(
-                        child: Icon(Icons.grid_view, color: Colors.white54, size: 30),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.extension, color: Colors.amber, size: 16),
-                              SizedBox(width: 4),
-                              Text('3', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16)),
-                              Spacer(),
-                              Text('195 🔥 3', style: TextStyle(color: Colors.grey, fontSize: 14)),
-                            ],
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Solve Puzzles',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ],
           ),
