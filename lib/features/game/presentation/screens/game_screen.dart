@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../domain/entities/chess_piece.dart';
@@ -7,7 +8,9 @@ import '../widgets/captured_pieces.dart';
 import '../widgets/game_over_dialog.dart';
 
 class GameScreen extends StatefulWidget {
-  const GameScreen({super.key});
+  final int initialTimeSeconds; // Accepts time from home screen (e.g., 180, 60, 600)
+
+  const GameScreen({super.key, this.initialTimeSeconds = 180});
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -24,10 +27,58 @@ class _GameScreenState extends State<GameScreen> {
   bool isWhiteTurn = true;
   String? gameOverMessage;
 
+  // Clock timers
+  late int whiteTimeRemaining;
+  late int blackTimeRemaining;
+  Timer? gameTimer;
+
   @override
   void initState() {
     super.initState();
+    whiteTimeRemaining = widget.initialTimeSeconds;
+    blackTimeRemaining = widget.initialTimeSeconds;
     _initializeBoard();
+    _startTimer();
+  }
+
+  @override
+  void dispose() {
+    gameTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startTimer() {
+    gameTimer?.cancel();
+    gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (gameOverMessage != null) {
+        timer.cancel();
+        return;
+      }
+
+      setState(() {
+        if (isWhiteTurn) {
+          if (whiteTimeRemaining > 0) {
+            whiteTimeRemaining--;
+          } else {
+            gameOverMessage = "BLACK Wins on Time!";
+            timer.cancel();
+          }
+        } else {
+          if (blackTimeRemaining > 0) {
+            blackTimeRemaining--;
+          } else {
+            gameOverMessage = "WHITE Wins on Time!";
+            timer.cancel();
+          }
+        }
+      });
+    });
+  }
+
+  String _formatTime(int seconds) {
+    int minutes = seconds ~/ 60;
+    int remainingSeconds = seconds % 60;
+    return "$minutes:${remainingSeconds.toString().padLeft(2, '0')}";
   }
 
   void _initializeBoard() {
@@ -57,7 +108,10 @@ class _GameScreenState extends State<GameScreen> {
       selectedCol = null;
       currentValidMoves.clear();
       gameOverMessage = null;
+      whiteTimeRemaining = widget.initialTimeSeconds;
+      blackTimeRemaining = widget.initialTimeSeconds;
     });
+    _startTimer();
   }
 
   void _handleSquareTap(int row, int col) {
@@ -170,7 +224,8 @@ class _GameScreenState extends State<GameScreen> {
           SafeArea(
             child: Column(
               children: [
-                _buildPlayerHeader('Player 2 (Black)', blackCaptured, !isWhiteTurn),
+                // Player 2 Header with Black's Live Timer
+                _buildPlayerHeader('Player 2 (Black)', blackCaptured, !isWhiteTurn, _formatTime(blackTimeRemaining)),
                 const Spacer(),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -183,11 +238,11 @@ class _GameScreenState extends State<GameScreen> {
                   ),
                 ),
                 const Spacer(),
-                _buildPlayerHeader('Player 1 (White)', whiteCaptured, isWhiteTurn),
+                // Player 1 Header with White's Live Timer
+                _buildPlayerHeader('Player 1 (White)', whiteCaptured, isWhiteTurn, _formatTime(whiteTimeRemaining)),
               ],
             ),
           ),
-          // Blur checkmate overlay screen takes over when game ends
           if (gameOverMessage != null)
             GameOverDialog(
               message: gameOverMessage!,
@@ -198,7 +253,7 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  Widget _buildPlayerHeader(String name, List<ChessPiece> captured, bool isActive) {
+  Widget _buildPlayerHeader(String name, List<ChessPiece> captured, bool isActive, String timeText) {
     return Container(
       padding: const EdgeInsets.all(12.0),
       color: isActive ? AppColors.surfaceDark.withOpacity(0.9) : AppColors.surfaceDark.withOpacity(0.4),
@@ -209,20 +264,39 @@ class _GameScreenState extends State<GameScreen> {
             child: const Icon(Icons.person, color: Colors.white),
           ),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: isActive ? Colors.white : Colors.grey,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: isActive ? Colors.white : Colors.grey,
+                  ),
                 ),
+                const SizedBox(height: 4),
+                CapturedPiecesWidget(capturedPieces: captured),
+              ],
+            ),
+          ),
+          // Clock timer display box
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: isActive ? const Color(0xFF383633) : Colors.black26,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: isActive ? AppColors.primaryGreen : Colors.transparent),
+            ),
+            child: Text(
+              timeText,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isActive ? Colors.white : Colors.grey,
               ),
-              const SizedBox(height: 4),
-              CapturedPiecesWidget(capturedPieces: captured),
-            ],
+            ),
           ),
         ],
       ),
