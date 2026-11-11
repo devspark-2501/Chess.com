@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../auth/presentation/screens/login_screen.dart';
+import '../../../auth/presentation/screens/signup_screen.dart';
 import '../../../game/presentation/screens/game_screen.dart';
+import '../widgets/app_drawer.dart';
 import '../widgets/menu_button.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -12,17 +16,29 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String selectedTimeControl = '3 min';
+  String? username;
+  int rating = 1200;
 
-  // Convert time control string to seconds
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      username = prefs.getString('username');
+      rating = prefs.getInt('rating') ?? 1200;
+    });
+  }
+
   int _getTimeInSeconds(String timeStr) {
     switch (timeStr) {
-      case '1 min':
-        return 60;
-      case '10 min':
-        return 600;
+      case '1 min': return 60;
+      case '10 min': return 600;
       case '3 min':
-      default:
-        return 180;
+      default: return 180;
     }
   }
 
@@ -32,29 +48,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
+      drawer: AppDrawer(
+        username: username,
+        onLogout: () {
+          setState(() {
+            username = null;
+          });
+        },
+      ),
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.menu, color: Colors.white),
-          onPressed: () {},
-        ),
         title: const Row(
           children: [
             Icon(Icons.extension, color: AppColors.primaryGreen, size: 28),
             SizedBox(width: 8),
-            Text(
-              'Chess.com',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white),
-            ),
+            Text('Chess.com', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white)),
           ],
         ),
         backgroundColor: AppColors.surfaceDark,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none, color: Colors.white),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -62,38 +73,66 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // User Profile Header Bar
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceDark,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Row(
+              // User Profile Header or Guest Login Banner
+              if (username != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceDark,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const CircleAvatar(
+                        backgroundColor: Colors.white24,
+                        child: Icon(Icons.person, color: Colors.white),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        username!,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text('🇮🇳', style: TextStyle(fontSize: 16)),
+                      const Spacer(),
+                      const Icon(Icons.local_fire_department, color: Colors.orange, size: 20),
+                      Text(
+                        ' $rating',
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Row(
                   children: [
-                    CircleAvatar(
-                      backgroundColor: Colors.white24,
-                      child: Icon(Icons.person, color: Colors.white),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryGreen),
+                        onPressed: () async {
+                          final loggedIn = await Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const LoginScreen()),
+                          );
+                          if (loggedIn == true) _loadUserData();
+                        },
+                        child: const Text('Log In', style: TextStyle(color: Colors.white)),
+                      ),
                     ),
-                    SizedBox(width: 12),
-                    Text(
-                      'Tanush-25',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
-                    ),
-                    SizedBox(width: 8),
-                    Text('🇮🇳', style: TextStyle(fontSize: 16)),
-                    Spacer(),
-                    Icon(Icons.local_fire_department, color: Colors.orange, size: 20),
-                    Text(
-                      ' 1100',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const SignupScreen()));
+                        },
+                        child: const Text('Sign Up', style: TextStyle(color: Colors.white)),
+                      ),
                     ),
                   ],
                 ),
-              ),
               const SizedBox(height: 20),
 
-              // Time Control Buttons
+              // Time Controls
               Row(
                 children: ['3 min', '1 min', '10 min'].map((time) {
                   bool isSelected = selectedTimeControl == time;
@@ -101,11 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            selectedTimeControl = time;
-                          });
-                        },
+                        onTap: () => setState(() => selectedTimeControl = time),
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           decoration: BoxDecoration(
@@ -133,27 +168,20 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 12),
 
-              // Start Game Button
+              // Start Game
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryGreen,
-                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  elevation: 0,
                 ),
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => GameScreen(initialTimeSeconds: timeSeconds),
-                    ),
+                    MaterialPageRoute(builder: (_) => GameScreen(initialTimeSeconds: timeSeconds)),
                   );
                 },
-                child: const Text(
-                  'Start Game',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+                child: const Text('Start Game', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
               ),
               const SizedBox(height: 20),
 
@@ -164,25 +192,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => GameScreen(initialTimeSeconds: timeSeconds),
-                    ),
+                    MaterialPageRoute(builder: (_) => GameScreen(initialTimeSeconds: timeSeconds)),
                   );
                 },
-              ),
-              MenuButton(
-                icon: Icons.smart_toy,
-                title: 'Play Bots',
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Bot mode coming soon!')),
-                  );
-                },
-              ),
-              MenuButton(
-                icon: Icons.school,
-                title: 'Play Coach',
-                onTap: () {},
               ),
               MenuButton(
                 icon: Icons.people,
@@ -190,9 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => GameScreen(initialTimeSeconds: timeSeconds),
-                    ),
+                    MaterialPageRoute(builder: (_) => GameScreen(initialTimeSeconds: timeSeconds)),
                   );
                 },
               ),
