@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from app.config import get_database
 from app.models.game import GameRecord
 
