@@ -10,7 +10,6 @@ async def register(user: UserRegister):
     db = await get_database()
     users_collection = db["users"]
 
-    # Check if user already exists
     existing_user = await users_collection.find_one({"email": user.email})
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -41,4 +40,9 @@ async def login(user: UserLogin):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password")
 
     token = create_access_token({"sub": db_user["username"]})
-    return {"access_token": token, "token_type": "bearer", "username": db_user["username"], "rating": db_user.get("rating", 1200)}
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "username": db_user["username"],
+        "rating": db_user.get("rating", 1200)
+    }
