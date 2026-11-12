@@ -3,8 +3,6 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  // Use 127.0.0.1 for Chrome / Web / Desktop
-  // (Switch back to 10.0.2.2 if you test on the Android Emulator later)
   static const String baseUrl = 'http://127.0.0.1:8000/api';
 
   static Future> login(String username, String password) async {
