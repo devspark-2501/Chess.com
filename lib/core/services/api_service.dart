@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ApiService {
   static const String baseUrl = 'http://127.0.0.1:8000/api';
 
-  static Future> login(String username, String password) async {
+  static Future login(String username, String password) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/auth/login'),
@@ -29,7 +29,7 @@ class ApiService {
     }
   }
 
-  static Future> signup(String username, String email, String password) async {
+  static Future signup(String username, String email, String password) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/auth/register'),
