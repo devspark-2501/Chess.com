@@ -42,5 +42,6 @@ chess_app/
     ├── features/
     │   ├── auth/          # Login & Signup screens and widgets
     │   ├── game/          # Chessboard UI and move validation logic
+
     │   └── home/          # Home screen, player profile card, and hamburger drawer
     └── main.dart          # Flutter app entry point
